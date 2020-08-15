@@ -1,4 +1,5 @@
 from prometheus_client import CollectorRegistry, Counter, Gauge, generate_latest, CONTENT_TYPE_LATEST
+
 from luigi.metrics import MetricsCollector
 
 
@@ -51,7 +52,9 @@ class PrometheusMetricsCollector(MetricsCollector):
 
     def handle_task_disabled(self, task, config):
         self.task_disabled_counter.labels(family=task.family).inc()
-        self.task_execution_time.labels(family=task.family).set(task.updated - task.time_running)
+        # time_running can be `None` if task was disabled
+        if task.updated and task.time_running:
+            self.task_execution_time.labels(family=task.family).set(task.updated - task.time_running)
 
     def handle_task_done(self, task):
         self.task_done_counter.labels(family=task.family).inc()
